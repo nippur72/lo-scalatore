@@ -1,5 +1,4 @@
 
-
    PROCESSOR 6502
 
    ORG 900

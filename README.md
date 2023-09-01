@@ -7,7 +7,7 @@ In Italy, the game was known under the name "Lo Scalatore" following its appeara
 
 As a tribute to this simple yet beautiful game, I embarked on a complete reverse-engineering of its source code, comprising a total of 79 tightly packed BASIC V2 lines. The resulting commented file can be seen [here](lo_scalatore_commentato.bas). Please note that the comments are provided in Italian.
 
-I've taken the liberty of creating an enhanced version of the game by turning it into machine language using the [Mospeed](https://github.com/EgonOlsen71/basicv2) compiler. This improved edition features a slightly accelerated game pace with a flicker-free smooth animation achieved by synchronizing screen drawing with the raster beam. Furthermore, some minor bugs have been fixed, and a proper credit/copyright screen page has been added. You can download this [2023 turbo edition here](mospeed/lo_scalatore_pucrunched.prg).
+I've taken the liberty of creating an enhanced version of the game by turning it into machine language using the [Mospeed](https://github.com/EgonOlsen71/basicv2) compiler. This improved edition features a slightly accelerated game pace with a flicker-free smooth animation achieved by synchronizing screen drawing with the raster beam. Furthermore, some minor bugs have been fixed, and a proper credit/copyright screen page has been added. You can download this [2023 turbo edition here](mospeed/lo_scalatore_turbo_2023.prg).
 
 This repository also contains the following:
 

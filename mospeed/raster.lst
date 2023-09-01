@@ -1,17 +1,16 @@
 ------- FILE raster.asm LEVEL 1 PASS 1
       1  0000 ????
-      2  0000 ????
-      3  0000 ????				      PROCESSOR	6502
-      4  0000 ????
-      5  0384					      ORG	900
-      6  0384
-      7  0384				   WAITRASTER
-      8  0384		       ad 04 90 	      LDA	$9004
-      9  0387		       c9 6e		      CMP	#110
-     10  0389		       d0 f9		      BNE	WAITRASTER
-     11  038b				   WAITRASTER1
-     12  038b		       ad 04 90 	      LDA	$9004
-     13  038e		       c9 6e		      CMP	#110
-     14  0390		       f0 f9		      BEQ	WAITRASTER1
-     15  0392		       60		      RTS
-     16  0393
+      2  0000 ????				      PROCESSOR	6502
+      3  0000 ????
+      4  0384					      ORG	900
+      5  0384
+      6  0384				   WAITRASTER
+      7  0384		       ad 04 90 	      LDA	$9004
+      8  0387		       c9 6e		      CMP	#110
+      9  0389		       d0 f9		      BNE	WAITRASTER
+     10  038b				   WAITRASTER1
+     11  038b		       ad 04 90 	      LDA	$9004
+     12  038e		       c9 6e		      CMP	#110
+     13  0390		       f0 f9		      BEQ	WAITRASTER1
+     14  0392		       60		      RTS
+     15  0393
