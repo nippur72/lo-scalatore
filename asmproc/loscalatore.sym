@@ -1,0 +1,113 @@
+--- Symbol List (sorted by symbol)
+BASIC_RAM                1001              (R )
+BASIC_ROW_0              1001                  
+BASIC_ROW_1              1047              (R )
+BASIC_ROW_10             11b0              (R )
+BASIC_ROW_11             11c2              (R )
+BASIC_ROW_12             11ed              (R )
+BASIC_ROW_13             11f5              (R )
+BASIC_ROW_14             1226              (R )
+BASIC_ROW_15             1253              (R )
+BASIC_ROW_16             125b              (R )
+BASIC_ROW_17             1280              (R )
+BASIC_ROW_18             1288              (R )
+BASIC_ROW_19             12b8              (R )
+BASIC_ROW_2              1087              (R )
+BASIC_ROW_20             12c0              (R )
+BASIC_ROW_21             1300              (R )
+BASIC_ROW_22             1320              (R )
+BASIC_ROW_23             1364              (R )
+BASIC_ROW_24             137c              (R )
+BASIC_ROW_25             13a8              (R )
+BASIC_ROW_26             13d5              (R )
+BASIC_ROW_27             13e2              (R )
+BASIC_ROW_28             13ea              (R )
+BASIC_ROW_29             141a              (R )
+BASIC_ROW_3              10b8              (R )
+BASIC_ROW_30             1445              (R )
+BASIC_ROW_31             1455              (R )
+BASIC_ROW_32             1462              (R )
+BASIC_ROW_33             1471              (R )
+BASIC_ROW_34             1484              (R )
+BASIC_ROW_35             1492              (R )
+BASIC_ROW_36             14b0              (R )
+BASIC_ROW_37             14fe              (R )
+BASIC_ROW_38             151f              (R )
+BASIC_ROW_39             1557              (R )
+BASIC_ROW_4              10f7              (R )
+BASIC_ROW_40             158e              (R )
+BASIC_ROW_41             159b              (R )
+BASIC_ROW_42             15b0              (R )
+BASIC_ROW_43             15c5              (R )
+BASIC_ROW_44             15d2              (R )
+BASIC_ROW_45             1601              (R )
+BASIC_ROW_46             163a              (R )
+BASIC_ROW_47             1663              (R )
+BASIC_ROW_48             166b              (R )
+BASIC_ROW_49             1673              (R )
+BASIC_ROW_5              1115              (R )
+BASIC_ROW_50             16ae              (R )
+BASIC_ROW_51             16fe              (R )
+BASIC_ROW_52             1726              (R )
+BASIC_ROW_53             174f              (R )
+BASIC_ROW_54             1780              (R )
+BASIC_ROW_55             178b              (R )
+BASIC_ROW_56             17ad              (R )
+BASIC_ROW_57             17f1              (R )
+BASIC_ROW_58             1812              (R )
+BASIC_ROW_59             1818              (R )
+BASIC_ROW_6              1125              (R )
+BASIC_ROW_60             1824              (R )
+BASIC_ROW_61             1866              (R )
+BASIC_ROW_62             1879              (R )
+BASIC_ROW_63             187f              (R )
+BASIC_ROW_64             188a              (R )
+BASIC_ROW_65             18b8              (R )
+BASIC_ROW_66             18cd              (R )
+BASIC_ROW_67             18f5              (R )
+BASIC_ROW_68             192d              (R )
+BASIC_ROW_69             194f              (R )
+BASIC_ROW_7              1152              (R )
+BASIC_ROW_70             1955              (R )
+BASIC_ROW_71             197b              (R )
+BASIC_ROW_72             19d1              (R )
+BASIC_ROW_73             1a27              (R )
+BASIC_ROW_74             1a41              (R )
+BASIC_ROW_75             1a6c              (R )
+BASIC_ROW_76             1a72              (R )
+BASIC_ROW_77             1a99              (R )
+BASIC_ROW_78             1a9f              (R )
+BASIC_ROW_8              116a              (R )
+BASIC_ROW_9              1190              (R )
+CLRSCN                   e55f                  
+COLOR_BLACK              0000                  
+COLOR_BLUE               0006                  
+COLOR_CYAN               0003                  
+COLOR_GREEN              0005                  
+COLOR_MAGENTA            0004                  
+COLOR_PAGE_OFFSET        0078                  
+COLOR_RAM                9600              (R )
+COLOR_RED                0002                  
+COLOR_WHITE              0001                  
+COLOR_YELLOW             0007                  
+CRSRCOL                  0286                  
+CURSOR_PTR               00d1                  
+GETIN                    ffe4                  
+GOHOME                   e581                  
+JIFFY_CLOCK              00a2                  
+JOY_DOWN                 1ab6              (R )
+JOY_LEFT                 1ac2              (R )
+JOY_NOTHING              1ae8              (R )
+JOY_RIGHT                1ad8              (R )
+JOY_UP                   1ace              (R )
+LMCODE                   1aa1                  
+PRNINT                   ddcd                  
+PRNSTR                   cb1e                  
+RASTER                   9004                  
+READ_JOYSTICK            1aa1              (R )
+ROMCHAR                  8000                  
+SCNKEY                   ff9f                  
+SCREEN_COLS              0016                  
+SCREEN_ROWS              0017                  
+VIDEO_RAM                1e00              (R )
+--- End of Symbol List.

@@ -1,0 +1,108 @@
+0 poke648,30:poke36869,240:poke36866,150:print"{clr}":poke36869,255:poke36878,16*8+15:poke36879,25
+1 d=37154:p1=37151:p2=37152:do(0)=-1:do(1)=1:di=do(int(rnd(1)*2))
+2 a$=">>>>>>>>>>>>>>>>>>>>>{left}{inst}>":dimb(11):g=(38400-7680)
+3 kk=0.1:cb=6:cs=2:sc=1:ch=2:e1=0:d(0)=4:d(1)=cs:d(4)=cb:z=57:e3=1:q=10000:j=56
+10 gosub200:gosub100:poke36869,255:e4=0:e5=2
+15 gosub70:h=0:y=0
+16 s=8143+int(rnd(1)*20):ifpeek(s+22)=62orpeek(s)=59then16
+17 t=peek(s):pokes,58:pokes+g,0
+19 v=7712+b(y):w=62:do=do(int(rnd(1)*2))
+20 sys828:sys900:sys900:onpeek(1)goto35,26,28,31,33
+21 goto41:rem forn=1to23:next:goto41
+26 ifpeek(s+22)=zthenpokes,t:pokes+g,d(t-j):s=s+22:goto40
+27 goto41
+28 di=-1:ifpeek(s+21)<62thenpokes,t:pokes+g,d(t-j):s=s-1:goto40
+29 ift<>zthenpokes,t:pokes+g,d(t-j):s=s+di:t=peek(s):goto55
+30 goto41
+31 ift=zthenpokes,t:pokes+g,d(t-j):s=s-22:goto40
+32 goto41
+33 di=1:ifpeek(s+23)<62thenpokes,t:pokes+g,d(t-j):s=s+1:goto40
+34 goto29
+35 poke36876,240:pokes,t:pokes+g,d(t-j):s=s-22+di:t=peek(s):pokes,58:pokes+g,0:ift=60then55
+36 ifpeek(s+22)=60thenss=ss+1000:print"{home}{rvon}"tab(8-len(str$(ss)))ss
+37 forn=1to3:sys900:next:pokes,t:pokes+g,d(t-j):s=s+22+di:t=peek(s):pokes,58:ifpeek(s+22)>61then55
+38 pokes+g,0:poke36876,0:goto41
+40 poke36876,200:forn=1to5:kk=kk+1:next:poke36876,0:t=peek(s):pokes,58:pokes+g,0:sys900
+41 ift=61thenpoke36877,252:ss=ss+150:print"{home}{rvon}"tab(8-len(str$(ss)))ss:h=h+1:t=62:poke36877,0:ifh=16then64
+42 ift=60then55
+43 gosub98
+45 sys900:sys900:pokev,w:pokev+g,d(w-j):v=v+do:w=peek(v):pokev,60:pokev+g,cb
+46 ifdo=22andpeek(v+22)=56thendo=do(int(rnd(1)*2)):goto48
+47 ifw=63thendo=22
+48 ifw=58then55
+49 ifv<8164then20
+50 y=y+1:ify=12then55
+51 pokev,62:goto19
+55 poke36876,0:so=250:ift=60thent=w
+56 poke36874,so:ifpeek(s+22)<>56ands<8164thenpokes,t:pokes+g,d(t-j):s=s+22:t=peek(s):pokes,58:pokes+g,0
+57 forn=1to3:sys900:next:so=so-5:ifso>150then56
+58 poke36874,0:ch=ch-1:ifch=-1thengoto300
+59 print"{home}{rvon}"tab(14)ch:pokev,w:pokev+g,d(w-j):y=y+1:ifw=58thenpokev,t:pokev+g,d(t-j)
+60 ify>10then15
+61 ifs>8163thenpokes,t:goto16
+62 pokes,58:pokes+g,0:goto19
+64 ify=11then67
+65 forn=y+1to11:poke7712+b(n),62:ss=ss+100:print"{home}{rvon}"tab(8-len(str$(ss)))ss:gosub98
+66 poke36877,250:form=240to250:sys900:poke36876,m:next:poke36876,0:poke36877,0:next
+67 e2=e2+.05:sc=sc+1:e1=e1+1:ife1>8thene1=8
+68 goto15
+69 goto69
+70 print"{clr}{pur}";:forn=1to21:printa$:next:printa$"{home}":b$=">88888888888888888888"
+71 print"{down}{down}"tab(6)"?>>>>>>>>?{red}":printtab(6)"9{pur}88888888{red}9":printtab(6)"9>>>>>>>>9":printtab(6)"9>>>>>>>>9{pur}"
+72 forn=1to3:printb$"{down}{down}{down}{down}":next:printb$"{home}";:poke8185,62
+73 print"{rvon}"tab(8-len(str$(ss)))ss;tab(14)ch;tab(17)sc:poke7697,163:forn=0to11:poke7712+b(n),60
+74 poke7712+b(n)+g,cb:next:forn=7834to8164step110:ifn=8164then80
+75 foro=1to3
+76 r=n+1+int(rnd(1)*20):ifpeek(r)<>56then76
+77 form=rtor+88step22:pokem,57:pokem+g,cs:next:ifo>1andrnd(1)<e2thenpoker+(int(rnd(1)*2)+2)*22,63
+78 ifrnd(1)<.5andpeek(r-22)=62thenpoker-22,63
+79 next
+80 foro=1toe1
+81 r=n+3+int(rnd(1)*16):ifpeek(r)<>56orpeek(r-22)<>62orpeek(r+1)=62orpeek(r-1)=62then85
+84 poker,62:poker-22,63
+85 next
+86 foro=1to4
+87 r=n-21+int(rnd(1)*20):ifpeek(r)<>62orpeek(r+22)=62then87
+88 poker,61:poker+g,0:next:next
+89 poke7710,63:poke7715,63:poke7731,63:poke7738,63
+90 forn=7812to8142step110:poken,63:next:forn=7833to8163step110:poken,63:next:return
+98 ifss>=q*e3thench=ch+1:e3=e3+1:print"{home}{rvon}"tab(14)ch
+99 return
+100 data,1,21,22,23,24,42,43,44,45,46,47
+101 data255,255,153,102,102,153,255,255,195,255,255,195,195,255,255,195,60,60,25,255,188
+102 data60,36,231,3,4,24,24,60,126,126,60,60,66,165,153,153,165,66,60,,24,36,126,126,126
+103 data126,,,,,,,,,,,,,,,,,
+106 data169,,133,1,169,255,141,34,145,169,32,44,31,145,208,5,169,1,133,1,96,169,8,44
+107 data31,145,208,5,169,2,133,1,96,169,16,44,31,145,208,5,169,3,133,1,96,169,4,44,31
+108 data145,208,3,133,1,96,169,127,141,34,145,169,128,44,32,145,208,4,169,5,133,1,96, 173,4,144,201,110,208,249,173,4,144,201,110,240,249,96
+109 forn=0to11:readb(n):next:forn=7616to7679:readm:poken,m:next
+110 forn=828to899+15:readm:poken,m:next:return
+200 poke36879,25:poke36869,242
+210 print "{clr}{blue}{down}{down}{rvson} THE HARDHAT CLIMBER {rvsoff}{down}"
+220 print "      written by 
+221 print
+225 print "     {black}Chris Lesher{blue}"     
+226 print
+227 print "  Compute!'s Gazette"     
+228 print "      Jan, 1984"     
+229 print
+230 print:print
+231 print "  2023 turbo edition"
+240 print " by Antonino Porcino"
+246 print 
+247 print "{green}github.com/nippur72"
+248 print "/lo-scalatore{blue}"
+249 print
+250 print:print
+251 print "    press any key"
+252 poke198,0
+260 getk$:if k$="" then goto 260
+270 return
+300 poked,255:poke36869,240:print"{clr}{blk}your score: "ss
+320 print "{down}{down}{down}{down}press any key"
+325 poke198,0
+330 getk$:if k$="" then goto 330
+340 run
+997 rem    1234567890123456789012
+998 rem lo scalatore per vic-20 digitato da saver71 18/11/2014
+999 rem convertito per 16K nippur72 07/05/2020

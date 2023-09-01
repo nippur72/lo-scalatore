@@ -1,0 +1,11 @@
+   processor 6502
+
+   org 900
+
+waitraster:
+   lda $9004
+   if a<>#110 then goto waitraster
+waitraster1:
+   lda $9004
+   if a=#110 then goto waitraster1
+   rts
