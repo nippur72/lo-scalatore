@@ -20,21 +20,34 @@
 '   venisse fatta in linguaggio macchina
 ' - non usa il carattere dello spazio ma un carattere ridefinito
 '   per usare tutta la memoria possibile del VIC-20 inespanso
-' - per cancellare lo schermo usa il trucco di print col buffer (?verificare)
+' - per cancellare lo schermo usa il trucco di inserire 
+'   il carattere spazio nell'ultima colonna per evitare lo scroll
 ' - contiene 1 linea morta: 69 goto 69
 ' - bug quando muore in cima alla scala, la scala si allunga
 ' - bug quando rotolano i barili dalla pila non controlla se c'è barile
-' - bug quando scatta il bonus vita
+' - bug quando scatta il bonus vita: i punti vengono assegnati a blocchi di 150 (borse), 
+'   100 (barili residui) e 1000 (salto barili). Raccogliendo le borse, il punteggio 
+'   difficilmente sarà un multiplo esatto di 10.000 (es. 9.950 -> 10.100). Saltando il
+'   valore esatto, il bonus vita non scatterà quasi mai.
 
 ' caratteri ridefiniti
 ' 8 trave     (56)
 ' 9 scala     (57)
 ' : omino     (58)
-' ; bomba     (59)
+' ; bomba     (59) (nel sorgente c'è il controllo omino su bomba, ma questo carattere non viene mai usato (feature non implementata))
 ' < barile    (60)
 ' = borsa     (61)
-' > spazio    (62)
-' ? deviatore (63) (invisibile, usato per deviare il barile)
+' > spazio    (62) (spazio calpestabile)
+' ? deviatore (63) (spazio invisibile trigger/deviatore), usato per deviare il barile a fine trave, o per generare scale interrotte)
+
+' Perchè ci sono due spazi invisibili: 62 e 63 ?
+' Il 62 è lo sfondo calpestabile (spazio normale).
+' Il 63 è un trigger/deviatore invisibile: ogni volta che un barile in movimento incontra 63 
+' cambia direzione e inizia a cadere verso il basso. Viene posizionato:
+' - ai lati delle travi (riga 90).
+' - sopra i buchi delle travi (riga 84).
+' - in cima alle scale (riga 78).
+' - ai lati della pila di barili (riga 89).
 
 ' === variabili ===
 ' relativi all'omino:
@@ -60,7 +73,7 @@
 '
 ' vari:
 '    g=offset per andare da screen RAM a color RAM
-'    d()= vettore contentente i colori dei caratteri a partire da 56 colore = d(56-i)
+'    d()= vettore contentente i colori dei caratteri a partire da 56 colore = d(i-56)
 '    z=carattere della scala (57)
 '    j=carattere della trave (56)
 '    d = variabile usata per resettare il VIA a fine gioco
@@ -86,11 +99,12 @@
    do(0)=-1:do(1)=1       ' array usato per scegliere tra -1 e +1 in maniera casuale
    di=do(int(rnd(1)*2))   ' sceglie casualmente la direzione di marcia iniziale dell'omino (sx/dx)
 
- 2 a$=">>>>>>>>>>>>>>>>>>>>>{left}{inst}>"         ' variabile usata per riempire lo schermo di "spazi"
+ 2 a$=">>>>>>>>>>>>>>>>>>>>>{left}{inst}>"   ' variabile usata per riempire lo schermo di spazi col trucco 
+                                             ' di inserire il carattere spazio nell'ultima colonna per evitare lo scroll
    dim b(11)      ' dimensiona vettore b contenente le posizioni dei barili sulla pila
    g=30720        ' offset per andare da screen RAM a color RAM (38400-7680)
    3 sc=1           ' livello 1
-   ch=2           ' numero di vite 2
+   ch=2           ' numero di vite 3
    e1=0           ' 0 buchi sulle travi al primo livello
    d(0)=4         ' colore trave (magenta)
    d(1)=2         ' colore scala (rosso)
@@ -185,7 +199,7 @@
    s=s+22+di                                      ' sposta omino una riga sotto di nuovo sulla linea di base
    t=peek(s)                                      ' vede cosa c'è sotto omino
    poke s,58                                      ' disegna omino nella nuova posizione
-   if peek(s+22)>61 then 55                       ' se saltato su un barile o su uno spazio vai alla morte    
+   if peek(s+22)>61 then 55                       ' se saltato nel vuoto (spazio o deviatore) vai alla morte    
 
 38 poke s+g,0                                     ' colora omino di nero
    poke 36876,0                                   ' smette di suonare
@@ -323,8 +337,8 @@
 74    poke 7712+b(n)+g,7                                      ' colore barile
    next
       
-   for n=7834 to 8164 step 110                                ' cicla sulle 4 travi (110=8 righe di 22)
-         if n=8164 then 80                                      ' ?? non necessario?
+   for n=7834 to 8164 step 110                                ' cicla sulle 4 travi (110=5 righe di 22)
+         if n=8164 then 80                                      ' se è sulla prima trave (più bassa) non disegnare scale che scendono
 
          ' per ogni trave disegna 3 scale
 75     for o=1 to 3                                           ' disegna tre scale per trave
@@ -335,20 +349,20 @@
                poke m,57:poke m+g,2                             ' disegna scala rossa
             next                                                '
 
-            if o>1 and rnd(1)<e2 then                           ' (buco sulla scala) se dalla seconda scala in 
-               poker+(int(rnd(1)*2)+2)*22,63                    ' poi e chance casuale, buca la scala ad altezza casuale (63??)
-                                                               ' il buco può cadere a +2 o +3 righe da inizio scala
+            if o>1 and rnd(1)<e2 then                           ' (scala interrotta) se dalla seconda scala in 
+               poker+(int(rnd(1)*2)+2)*22,63                    ' poi e chance casuale, mette 63 ad altezza casuale
+                                                                ' creando una scala rotta (blocca salita e fa cadere)
 
 78        if rnd(1)<.5 and peek(r-22)=62 then                 ' (deviatore su scala) se 50% chance e sopra la scala c'è spazio
-               poker-22,63                                      ' mette un deviatore in cima alla scala
-79     next
+               poker-22,63                                      ' mette un deviatore in cima alla scala. Così facendo, c'è il 50% di chance
+79     next                                                     ' che un barile imbocchi la scala piuttosto che continui dritto
 
          ' disegna buchi sulle travi
 80     for o=1 to e1                                          ' crea un numero di buchi sulla rampa pari a e1
 81        r=n+3+int(rnd(1)*16)                                ' posizione casuale all'interno della rampa
             if peek(r)<>56                                      ' se non è trave 
-               or peek(r-22)<>62                                ' oppure il carattere di sopra non è spazio
-               or peek(r+1)=62 or peek(r-1)=62                  ' oppure i caratteri a sx/dx non sono spazio
+               or peek(r-22)<>62                                ' oppure il carattere di sopra non è spazio (non sta rompendo una scala)
+               or peek(r+1)=62 or peek(r-1)=62                  ' oppure i caratteri a sx/dx sono già buchi (impedisce buchi di 2 caratteri)
             then 85                                             ' allora non fa niente
 84        poke r,62:poke r-22,63                              ' trave libera: crea buco e deviazione
 85     next
@@ -447,7 +461,7 @@
 ' 5 - destra
 
 033c  LDA #$00 : STA $01          ' pulisce la cella $01 dove c'è il risultato 
-      LDA #$FF : STA $9122        ' imposta i bit della porta B del VIA #1 tutti in lettura
+      LDA #$FF : STA $9122        ' imposta i bit della porta B del VIA #1 in output per isolare la tastiera
       LDA #$20 : BIT $911F        ' testa il bit 5
       BNE $0351                   ' se alto (non premuto) prosegue
       LDA #$01 : STA $01          ' altrimenti imposta $01 come valore di ritorno in $01
@@ -468,7 +482,7 @@
       STA $01                     ' altrimenti imposta $04 (gia presente in A) come valore di ritorno in $01
       RTS                         ' ritorna al BASIC
 
-0373  LDA #$7F : STA $9122        ' imposta i bit della porta B del VIA #1 tutti in lettura
+0373  LDA #$7F : STA $9122        ' imposta il bit 7 della porta B del VIA #1 in lettura per leggere Joy Right
       LDA #$80 : BIT $9120        ' testa il bit 7
       BNE $0383                   ' se alto (non premuto) prosegue 
       LDA #$05 : STA $01          ' altrimenti imposta $05 come valore di ritorno in $01
