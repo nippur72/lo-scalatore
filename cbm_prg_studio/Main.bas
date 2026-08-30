@@ -75,7 +75,7 @@
 106 data169,,133,1,169,255,141,34,145,169,32,44,31,145,208,5,169,1,133,1,96,169,8,44
 107 data31,145,208,5,169,2,133,1,96,169,16,44,31,145,208,5,169,3,133,1,96,169,4,44,31
 108 data145,208,3,133,1,96,169,127,141,34,145,169,128,44,32,145,208,4,169,5,133,1,96
-109 forn=0to11:readb(n):next:forn=7616to7679:readm:poke0,m:next
+109 forn=0to11:readb(n):next:forn=7616to7679:readm:poken,m:next
 110 forn=828to899:readm:poken,m:next:return
 111 rem lo scalatore per vic-20 digitato da saver71 18/11/2014
 112 rem convertito per 16K nippur72 07/05/2020

@@ -337,23 +337,25 @@ sub draw_level() static
    
    for n=7834 to 8164 step 110
    
-      for o=1 to 3
-         do
-            r=n+1+random(20,31)
-         loop while peek(r)<>CHAR_TRAVE 
+      if n<8164 then
+         for o=1 to 3
+            do
+               r=n+1+random(20,31)
+            loop while peek(r)<>CHAR_TRAVE 
 
-         for m=r to r+88 step NCOLS
-            poke m,57
-            poke m+g,2
+            for m=r to r+88 step NCOLS
+               poke m,57
+               poke m+g,2
+            next
+            if o>1 and rnd()<divert_chance then 
+               poke r+(random(2,2)+2)*NCOLS,CHAR_DIVERT
+            end if
+
+            if rnd()<0.5 and peek(r-NCOLS)=CHAR_SPACE then 
+               poke r-NCOLS,CHAR_DIVERT
+            end if
          next
-         if o>1 and rnd()<divert_chance then 
-            poke r+(random(2,2)+2)*NCOLS,CHAR_DIVERT
-         end if
-
-         if rnd()<0.5 and peek(r-NCOLS)=CHAR_SPACE then 
-            poke r-NCOLS,CHAR_DIVERT
-         end if
-      next
+      end if
 
       for o=1 to holes
          do
@@ -389,7 +391,7 @@ end sub
 ' check bonus vite
 '
 sub check_bonus_vita() static
-   if score=bonus_multiplier*n_bonus then 
+   if score>=bonus_multiplier*n_bonus then 
       lives=lives+1
       n_bonus=n_bonus+1
       call update_score()
