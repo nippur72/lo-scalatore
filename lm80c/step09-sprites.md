@@ -197,7 +197,7 @@ numerazione e' stata riorganizzata come segue:
 | 3 | `SC=1:CH=2:E1=0:E2=0:Z=16:J=8:E3=1:Q=10000:GOTO 10` | `...:GOSUB 146:GOTO 10` (carica la routine in linguaggio macchina dai `DATA`) |
 | 17 | `T=VPEEK(S):VPOKE S,40` | `T=VPEEK(S):GOSUB 118` |
 | 19 | `GOSUB 4:V=BA(Y):W=0:DO=DO(INT(RND(1)*2))` | `GOSUB 4:V=BA(Y):VPOKE V,0:W=0:DO=DO(INT(RND(1)*2)):GOSUB 117` (§9.13: non basta la `120`) |
-| 20 | `PAUSE DL:K=INKEY(0):IF K=0 THEN 41` | `PAUSE DL:SYS AD:K=PEEK(SB)` (la routine in linguaggio macchina legge la matrice, §9.14) |
+| 20 | `PAUSE DL:K=INKEY(0):IF K=0 THEN 41` | `SYS AD:K=PEEK(SB)` (routine in ML: legge la matrice e non ha nessuna attesa, il `PAUSE DL` e' stato tolto, §9.14) |
 | 26 | `IF VPEEK(S+32)=Z THEN VPOKE S,T:S=S+32:GOTO 40` | `IF VPEEK(S+32)=Z THEN S=S+32:GOTO 40` |
 | 28 | `DI=-1:IF VPEEK(S+31)>1 THEN VPOKE S,T:S=S-1:GOTO 40` | `DI=-1:IF VPEEK(S+31)>1 THEN S=S-1:GOTO 40` |
 | 29 | `IF T<>Z THEN VPOKE S,T:S=S+DI:T=VPEEK(S):GOTO 55` | `IF T<>Z THEN S=S+DI:T=VPEEK(S):GOTO 55` |
@@ -399,8 +399,9 @@ sprite e' la versione con gli sprite e la lettura della matrice in ML. Le due pr
 diagnosi, utili se un giorno si tocca la SAT (§9.11) o la routine (§9.14), non come passi obbligatori
 del collaudo.
 
-Resta aperto solo il capitolo **taratura facoltativa** (step 08 §8.1-8.2): `DL` da 3 a 4 se il gioco
-gira troppo svelto, `tone` dei suoni se il timbro non convince, ordine di priorita' con due tasti
+Resta aperto solo il capitolo **taratura facoltativa** (step 08 §8.1-8.2): il ritmo del ciclo non e'
+piu' tarabile (il `PAUSE DL` della variante a sprite e' stato tolto: contano il costo del giro e il
+`SOUND` del passo), `tone` dei suoni se il timbro non convince, ordine di priorita' con due tasti
 premuti, tasti accumulati nel buffer del DOS a fine partita.
 
 ## 9.11 Piano B (se gli sprite non si vedono o sono spostati)
@@ -520,7 +521,7 @@ scritta in `lm80c/ml/lm80c_keys.asm`, assemblata con z88dk (`z80asm -b`) e caric
 
 ```
 3 ...:Q=10000:GOSUB 146:GOTO 10
-20 PAUSE DL:SYS AD:K=PEEK(SB)
+20 SYS AD:K=PEEK(SB)
 145 REM input in ML: ingresso a SYS AD, blocco di stato in coda (K in PEEK(SB))
 146 AD=30720:RESTORE 1094:READ LN:FOR N=0 TO LN-1:READ DT:POKE AD+N,DT:NEXT:RESTORE 101
 147 SB=AD+268:RETURN
@@ -593,9 +594,11 @@ di esecuzione** e non dal testo, quindi ora e' simulato da `lm80c/ml/verifica.mj
 
 **Tempi**: `INKEY(0)` aveva 1 centesimo di attesa incorporata che ora non c'e' piu'; al suo posto ci
 sono le otto letture della matrice e il calcolo di `K`, in tutto **179 istruzioni Z80 = 441 µs**
-(misurati sul core dell'emulatore). Il
-fotogramma si accorcia (~33 ms con `DL=3` invece di ~40) e il gioco gira un po' piu' svelto: se risulta
-troppo rapido si sale `DL` a 4 (step 08 §8.2d). Resta un'avvertenza, annotata in step 08 §8.6: i tasti
+(misurati sul core dell'emulatore). Nella variante a sprite e' stato tolto anche il `PAUSE DL` della
+riga 20 (`DL` non esiste piu'): il ciclo gira alla **massima velocita'** consentita dall'interprete,
+senza nessuna attesa per fotogramma. Il ritmo lo decidono ora il costo del giro e il `SOUND` del passo
+(10 ms, riga 40), che resta il tetto della velocita' dell'omino mentre i barili, che non hanno suono,
+vanno piu' svelto (step 08 §8.1 e §8.2d). Resta un'avvertenza, annotata in step 08 §8.6: i tasti
 premuti finiscono comunque nel buffer di input del DOS (lo faceva anche `INKEY`), quindi dopo una
 partita lunga il prompt BASIC puo' mostrare i codici accumulati. Il disturbo dello sniffer invece
 **non** e' piu' possibile.

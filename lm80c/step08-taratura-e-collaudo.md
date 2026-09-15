@@ -6,7 +6,7 @@ Regolare la velocita' del gioco sul LM80C (che l'originale otteneva con cicli di
 routine in linguaggio macchina del joystick), riepilogare tutti i requisiti del port e chiudere con
 un piano di collaudo completo sull'emulatore.
 
-## 8.1 La variabile `DL` (passo del ciclo di gioco)
+## 8.1 Il ritmo del ciclo: `PAUSE DL` (versione a tile), nessuna attesa (variante a sprite)
 
 L'originale non aveva un "frame rate": ogni giro del ciclo principale leggeva il joystick con
 `SYS 828` e poi perdeva tempo con `forn=1to23:next` (riga 21). Nel port il tempo di un fotogramma e'
@@ -14,19 +14,17 @@ esplicito:
 
 ```
 2 ...:DL=3
-20 PAUSE DL:K=INKEY(0):IF NB>0 THEN NB=NB-1:K=0      (versione a tile)
+20 PAUSE DL:K=INKEY(0):IF NB>0 THEN NB=NB-1:K=0      (versione a tile, congelata)
 ```
 
-(nella **variante a sprite** la riga 20 e' `PAUSE DL:SYS AD:K=PEEK(SB)`: l'input viene dalla
-routine in linguaggio macchina e il centesimo di attesa di `INKEY` non c'e' piu', §8.2d)
-
-`PAUSE n` attende **n centesimi di secondo** (0..65535, interrompibile con RUN/STOP), quindi:
+La versione a tile usa ancora `PAUSE DL`: `PAUSE n` attende **n centesimi di secondo** (0..65535,
+interrompibile con RUN/STOP), quindi:
 
 | valore | fotogrammi/s | sensazione di gioco |
 |---|---|---|
 | 12 | ~8 | molto lento: primo default del port, usato per il collaudo |
 | 6 | ~16 | vivace |
-| **3** | **~33** | **default attuale**: a ogni fotogramma l'omino fa un passo, quindi ~33 celle al secondo |
+| **3** | **~33** | **default della versione a tile**: a ogni fotogramma l'omino fa un passo, quindi ~33 celle al secondo |
 | 2 | ~50 | al limite: i barili diventano difficili da seguire |
 
 La taratura e' stata fatta a due riprese (12 -> 6 -> 3) perche' il movimento dell'omino risultava
@@ -37,7 +35,26 @@ dura meno di un fotogramma, il beep resta un ticchettio breve invece di diventar
 
 Va tarato **sull'emulatore usato**, perche' la velocita' dell'emulatore puo' differire da quella
 del computer reale: se il gioco "scatta" si alza `DL`, se e' lento lo si abbassa. `DL` e' l'unico
-valore da toccare per il ritmo generale.
+valore da toccare per il ritmo generale **della versione a tile**.
+
+### La variante a sprite non ha nessuna attesa
+
+`PAUSE DL` e' stato **tolto del tutto** (riga 20) e la variabile `DL` non esiste piu' (via dalla
+riga 2). La riga 20 e' rimasta solo:
+
+```
+20 SYS AD:K=PEEK(SB)
+```
+
+Il ciclo gira quindi alla **massima velocita'** che l'interprete consente, e omino e barili avanzano
+di **una cella per ogni giro**: non c'e' piu' nessun valore da tarare. Il ritmo lo decidono ora solo:
+
+- il costo del giro (chiamata alla routine in ML compresa: **441 µs**, §8.2d);
+- il `SOUND 1,3730,1` del passo (riga 40), **10 ms**, che si paga **a ogni passo dell'omino**: e' il
+  pavimento della sua velocita' (~100 passi/s al massimo). I barili quel suono non ce l'hanno,
+  quindi girano **piu' veloci dell'omino**: e' l'effetto da tenere d'occhio;
+- senza `PAUSE` cade anche RUN/STOP come via d'uscita: per fermare il gioco serve il reset, a meno di
+  far riportare il bit di RUN/STOP dalla routine in ML (step 04 §4.6).
 
 ## 8.2 Gli altri ritmi
 
@@ -47,7 +64,7 @@ valore da toccare per il ritmo generale.
 | ritmo della morte | 57 `FOR N=1 TO 17:NEXT` | velocita' della discesa sonora dell'animazione di morte | alzare il `17` allunga morte e suono insieme |
 | ritmo dell'auto-repeat (**solo versione a tile**) | riga 1: `KEY 9,8,2` | dopo 0,08 s ripete ogni 0,02 s tenendo premuta una freccia; **il default del sistema e' 0,64 s**. E' **il vero limite di velocita' dell'omino**: vedi §8.2b | `KEY 9,20,6` per un movimento a meta' velocita'; il secondo parametro non ha senso sotto `2` (la matrice viene letta ogni 20 ms) |
 | inibizione dell'input dopo la morte (**solo versione a tile**) | riga 58 `NB=2` + riga 20 (`IF NB>0 ...`) | per quanti fotogrammi l'input viene ignorato dopo la morte, per non far ripartire l'omino da solo | alzare il `2` (per esempio a `5`) per un'attesa piu' lunga dopo la morte |
-| input da leggere per fotogramma (**variante a sprite**) | riga 20 `SYS AD`, routine in ML a 30720 caricata dai `DATA 1094-1111` | le 8 righe della matrice lette dalla routine in linguaggio macchina con `di` (step 04 §4.6, step 09 §9.14): nessuna attesa forzata, nessuna coda, nessun auto-repeat da tarare: **179 istruzioni, 1627 cicli = 441 us**, misurati sul core dell'emulatore | se il gioco gira troppo veloce si sale `DL` (§8.2d) |
+| input da leggere per fotogramma (**variante a sprite**) | riga 20 `SYS AD`, routine in ML a 30720 caricata dai `DATA 1094-1111` | le 8 righe della matrice lette dalla routine in linguaggio macchina con `di` (step 04 §4.6, step 09 §9.14): nessuna attesa forzata, nessuna coda, nessun auto-repeat da tarare: **179 istruzioni, 1627 cicli = 441 us**, misurati sul core dell'emulatore | il ritmo non e' piu' tarabile: contano il costo del giro e il `SOUND` del passo (§8.1, §8.2d) |
 | fine livello | 65-66 | conteggio dei barili residui con rumore + rampa | leggere, non serve modificarla |
 
 ## 8.2b Perche' l'omino era lento: l'auto-repeat e' il suo limite
@@ -117,9 +134,10 @@ tempi:
   maschera, seleziona registro 14, leggi da 64) piu' il calcolo di `K`, il tutto con gli interrupt
   disattivati: sul core dell'emulatore la chiamata completa esegue **179 istruzioni, 1627 cicli**,
   cioe' **441 µs** a 3,6864 MHz. Molto meno del centesimo risparmiato (~5 ms in media);
-- il risultato e' un fotogramma **piu' corto** di prima (con `DL=3` si passa da ~40 ms a ~33 ms),
-  quindi il gioco gira un po' piu' svelto: **se risulta troppo rapido, si sale `DL` da 3 a 4**
-  (tabella §8.1). Attenzione: accelerano insieme omino **e** barili, e' l'unico orologio del gioco;
+- il `PAUSE DL` della riga 20 e' stato **tolto** (§8.1): il fotogramma non e' piu' `DL` + il resto, ma
+  solo il resto, e `DL` non esiste piu'. Il ritmo non e' piu' un valore da tarare: l'unico "orologio"
+  residuo e' il `SOUND` del passo (10 ms, riga 40), che fissa il tetto della velocita' dell'omino
+  (~100 passi/s) mentre i barili, che non hanno suono, vanno piu' svelto;
 - con `di` **non esiste piu' la finestra sullo sniffer**: le vecchie letture da BASIC erano esposte
   alla scansione del firmware ogni 20 ms (1,7-2,5 % di fotogrammi con `K` sbagliato, 0,6-0,75 % con la
   verifica del registro 15 descritta nella cronologia di step 04 §4.6). Ora la sequenza non puo' piu'
@@ -128,9 +146,10 @@ tempi:
   lettura e' uno stato, non un evento). Resta attivo quello di sistema, che non viene usato;
 - `NB` e' stato tolto dalla riga 58 (§8.2c): non c'e' piu' un tasto in coda da smaltire.
 
-Da verificare sull'emulatore: che il gioco **non** risulti piu' veloce del gradito (in quel caso
-`DL=4`) e che tenere premuta una freccia dia un passo **per ogni** fotogramma (prima dipendeva
-dall'auto-repeat, §8.2b). Il primo collaudo e' comunque `prove/p08-matrice.bas`, che mostra le otto
+Da verificare sull'emulatore: che tenere premuta una freccia dia un passo **per ogni** giro (prima
+dipendeva dall'auto-repeat, §8.2b), che la velocita' sia ancora giocabile (senza `PAUSE` i barili sono
+molto rapidi) e come si esce dal gioco ora che `PAUSE` non rende piu' efficace RUN/STOP (step 04
+§4.6). Il primo collaudo e' comunque `prove/p08-matrice.bas`, che mostra le otto
 righe grezze e il `K` calcolato dalla routine stessa (tabella §8.4, punto 7).
 
 ## 8.2e Il primo collaudo si e' fermato: `OUT OF DATA ERROR IN LINE 110`

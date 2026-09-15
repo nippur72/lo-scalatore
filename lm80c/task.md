@@ -34,7 +34,7 @@ Il port esiste in **due versioni**, con la stessa numerazione di riga e lo stess
 | 05 | barili, collisioni, morte e correzioni | `step05-barili-collisioni-morte.md` | righe 4-9, 19, 35-68 | da fare (gioco) |
 | 06 | punteggio, vite, livelli e fine partita | `step06-punteggio-vite-livelli.md` | righe 36-41, 65, 95-98, 120-122 | da fare (p05) |
 | 07 | suoni (PSG: `VOLUME`/`SOUND`) | `step07-suoni.md` | righe 0, 35, 40, 55-58, 66 | da fare (p06) |
-| 08 | taratura dei tempi, checklist e collaudo | `step08-taratura-e-collaudo.md` | `DL`, cicli di ritardo | piano di collaudo completo |
+| 08 | taratura dei tempi, checklist e collaudo | `step08-taratura-e-collaudo.md` | `DL` (solo versione a tile), cicli di ritardo | piano di collaudo completo |
 | 09 | variante con gli sprite (omino e barile) | `step09-sprites.md` | `lo_scalatore_lm80c_sprites.bas` (righe 1, 3, 17, 19, 20, 45, 51, 58, 59, 70 + nuove 1092, 1093, 115-121, 125-127, 145-147, 1094-1111) | **gioco: OK** (prova 22); `prove/p07` e `prove/p08` da collaudare |
 
 ## File prodotti
@@ -68,12 +68,12 @@ Il port esiste in **due versioni**, con la stessa numerazione di riga e lo stess
 - [ ] collaudo di `prove/p08-matrice.bas` (aggiornato: la prima riga deve dire `routine ML caricata: 279 byte`; a riposo otto righe di `.` con `K 0` e `FLAG 0`; ogni cursore e ogni alias `J L I K Z` deve accendere lo `0` nella riga e nella colonna giusta) e poi del gioco: **salto mentre si cammina**, nessun salto infinito tenendo premuto SPAZIO, nessun passo fantasma, `K` come nella tabella dello step 09 §9.14;
 - [x] **rimedio definitivo** al disturbo dello sniffer: routine in linguaggio macchina con `di`, via `SYS` (179 istruzioni, 1627 cicli = **441 µs**, step 04 §4.6). Verificata sul core dell'emulatore (`ml/prova_ml.mjs`, 33 controlli) prima del collaudo a mano;
 - [ ] priorita' con due tasti premuti: e' stata scelta quella dell'originale (`on peek(1) goto 35,26,28,31,33` = fire, sotto, sinistra, sopra, destra) -> **SPAZIO > GIU' > SINISTRA > SU > DESTRA**; se in gioco non convince, si scambiano le righe `135-136` con le `137-138` (step 09 §9.14);
-- [ ] velocita': il fotogramma si e' accorciato di ~5 ms (via l'attesa del centesimo di `INKEY`, sostituita da 441 µs di lettura in ML): se il gioco gira **troppo svelto** si sale `DL` da 3 a 4 (step 08 §8.2d);
+- [x] velocita': il fotogramma si e' accorciato di ~5 ms (via l'attesa del centesimo di `INKEY`, sostituita da 441 µs di lettura in ML) e poi e' stato tolto del tutto il `PAUSE DL` (riga 20, `DL` eliminata dalla riga 2): il ciclo gira alla **massima velocita'** che l'interprete consente. Resta da verificare in gioco che sia giocabile — l'unico "orologio" rimasto e' il `SOUND` del passo (10 ms, riga 40), quindi i barili vanno **piu' svelto dell'omino** — e come si esce ora che `PAUSE` non rende piu' efficace RUN/STOP (step 08 §8.1 e §8.2d, step 04 §4.6);
 - [ ] tasti accumulati nel buffer di input del DOS: a fine partita possono comparire sul prompt BASIC (comportamento del firmware, valeva anche con `INKEY`) — step 08 §8.6;
 - [ ] l'input in linguaggio macchina richiede il firmware **64K** (il default dell'emulatore): con il **32K** `$7800` e' ROM e non e' scrivibile, quindi la routine va riassemblata a un indirizzo della RAM alta (`$8241+`, da esprimere con il segno in `POKE`/`SYS`) — step 08 §8.6 e step 04 §4.6;
 - [ ] le due correzioni di `NB`/auto-repeat **non** sono state applicate a `lo_scalatore_lm80c.bas`, che e' congelato: se un giorno si riusa la versione a tile, vanno portate anche li' (righe 1, 20, 58);
 - [ ] eventuale correzione del bug della scala che si allunga (step 05 §5.4), se si manifesta;
-- [ ] taratura di `DL` (passo del ciclo di gioco) e dei ritmi di salto/morte (step 08 §8.1-8.2);
+- [ ] taratura dei ritmi di salto/morte (step 08 §8.2); `DL` non c'e' piu' nella variante a sprite (resta solo nella versione a tile, step 08 §8.1);
 - [ ] ritocco dei `tone` dei suoni se il timbro non convince (con le frequenze reali del VIC-20, step 07 §7.3);
 - [x] passo e salto allineati alle frequenze reali del VIC-20 (`tone` 3730 e 3996);
 - [ ] conferma delle soglie geometriche (righe 49 e 61 del port) al bordo basso del campo.

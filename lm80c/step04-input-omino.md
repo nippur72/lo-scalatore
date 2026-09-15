@@ -215,7 +215,7 @@ del registro 15, ma mai a zero). Il linguaggio macchina chiude il problema alla 
 |---|---|---|
 | 1 | `...:DI=DO(INT(RND(1)*2)):KEY 9,8,2` | `...:DI=DO(INT(RND(1)*2))` (l'auto-repeat non serve piu') |
 | 3 | `...:E3=1:Q=10000:GOTO 10` | `...:E3=1:Q=10000:GOSUB 146:GOTO 10` (carica la routine) |
-| 20 | `PAUSE DL:K=INKEY(0):IF NB>0 THEN NB=NB-1:K=0` | `PAUSE DL:SYS AD:K=PEEK(SB)` |
+| 20 | `PAUSE DL:K=INKEY(0):IF NB>0 THEN NB=NB-1:K=0` | `SYS AD:K=PEEK(SB)` (via anche il `PAUSE DL`: nessuna attesa per fotogramma) |
 | 58 | `...:CH=CH-1:NB=2:IF CH<0 THEN GOSUB 125:END` | `...:CH=CH-1:IF CH<0 THEN GOSUB 125:END` (via l'inibizione `NB`: serviva solo per `TMPKEYBFR`) |
 | 130-143 | routine di lettura in BASIC (`OUT`/`INP`) | **tolte**: al loro posto la routine in ML |
 | 145-147 | — | caricamento della routine in ML dai `DATA 1094-1111` |
@@ -338,7 +338,7 @@ BASIC e' stata **tolta** dal gioco.
 Il gioco fa **una chiamata per fotogramma**:
 
 ```
-20 PAUSE DL:SYS AD:K=PEEK(SB)         ' una scansione, K e' il codice del gioco
+20 SYS AD:K=PEEK(SB)                ' una scansione, K e' il codice del gioco
 ```
 
 La routine legge **tutte e otto** le righe della matrice (non solo le tre che servono) e ne ricava:
@@ -411,14 +411,18 @@ cursori SU/GIU', `J I K` nella stessa riga (`$EF`), `Z` nella stessa riga di `A 
 
 **Attenzione ai tempi**: `INKEY(0)` aveva 1 centesimo di attesa incorporata (0..10 ms, in media ~5 ms),
 che adesso non c'e' piu'; al suo posto ci sono le otto letture e il calcolo di `K` in linguaggio
-macchina, **441 µs**. Rispetto alla versione con `INKEY` il fotogramma si accorcia di ~5 ms (con `DL=3`
-si passa da ~38 a ~33 ms), mentre rispetto alla versione in BASIC con `OUT`/`INP` e' praticamente
-identico (441 µs contro 2-4 ms di interpretazione): **se il gioco, dopo il passaggio a questa versione,
-risulta troppo rapido si sale `DL` da 3 a 4** (step 08 §8.1).
+macchina, **441 µs**. Nella variante a sprite la riga 20 non ha **nemmeno** il `PAUSE DL`: la variabile
+`DL` e' stata tolta del tutto (riga 2), quindi il ciclo gira alla massima velocita' che l'interprete
+consente e non c'e' piu' nessuna attesa per fotogramma. Il ritmo non e' piu' un valore da tarare: lo
+decidono il costo del giro di ciclo e la durata del `SOUND` del passo (10 ms, riga 40), che diventa
+l'unico "orologio" residuo (step 08 §8.1).
 
 Un tasto che il gioco **non** vede piu' e' RUN/STOP: `INKEY` lo consegnava come codice 3, mentre la
-matrice (riga 0 bit 3) non viene guardata. Il gioco si ferma comunque con RUN/STOP, perche' `PAUSE`
-e' interrompibile; va solo tenuto premuto un attimo in piu'.
+matrice (riga 0 bit 3) non viene guardata. Finche' la riga 20 aveva `PAUSE DL` il gioco si fermava
+comunque con RUN/STOP, perche' `PAUSE` e' interrompibile. **Togliendo il `PAUSE` quel canale sparisce**:
+da verificare sull'emulatore, ma e' probabile che il gioco non si fermi piu' con RUN/STOP e che per
+uscire serva il reset. Per riavere RUN/STOP senza rallentare: far riportare alla routine in ML anche il
+bit 3 della riga 0 (il RUN/STOP, gia' presente in `IMG+0`) e provarlo dalla riga 20 con un `STOP`.
 
 ### Come e' stata verificata
 
