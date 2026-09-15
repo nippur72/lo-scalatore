@@ -17,7 +17,7 @@ esplicito:
 20 PAUSE DL:K=INKEY(0):IF NB>0 THEN NB=NB-1:K=0      (versione a tile)
 ```
 
-(nella **variante a sprite** la riga 20 e' `PAUSE DL:SYS AD+16:K=PEEK(AD)`: l'input viene dalla
+(nella **variante a sprite** la riga 20 e' `PAUSE DL:SYS AD:K=PEEK(SB)`: l'input viene dalla
 routine in linguaggio macchina e il centesimo di attesa di `INKEY` non c'e' piu', §8.2d)
 
 `PAUSE n` attende **n centesimi di secondo** (0..65535, interrompibile con RUN/STOP), quindi:
@@ -47,7 +47,7 @@ valore da toccare per il ritmo generale.
 | ritmo della morte | 57 `FOR N=1 TO 17:NEXT` | velocita' della discesa sonora dell'animazione di morte | alzare il `17` allunga morte e suono insieme |
 | ritmo dell'auto-repeat (**solo versione a tile**) | riga 1: `KEY 9,8,2` | dopo 0,08 s ripete ogni 0,02 s tenendo premuta una freccia; **il default del sistema e' 0,64 s**. E' **il vero limite di velocita' dell'omino**: vedi §8.2b | `KEY 9,20,6` per un movimento a meta' velocita'; il secondo parametro non ha senso sotto `2` (la matrice viene letta ogni 20 ms) |
 | inibizione dell'input dopo la morte (**solo versione a tile**) | riga 58 `NB=2` + riga 20 (`IF NB>0 ...`) | per quanti fotogrammi l'input viene ignorato dopo la morte, per non far ripartire l'omino da solo | alzare il `2` (per esempio a `5`) per un'attesa piu' lunga dopo la morte |
-| input da leggere per fotogramma (**variante a sprite**) | riga 20 `SYS AD+16`, routine in ML a 30736 caricata dai `DATA 1094-1111` | le 8 righe della matrice lette dalla routine in linguaggio macchina con `di` (step 04 §4.6, step 09 §9.14): nessuna attesa forzata, nessuna coda, nessun auto-repeat da tarare: **179 istruzioni, 1627 cicli = 441 us**, misurati sul core dell'emulatore | se il gioco gira troppo veloce si sale `DL` (§8.2d) |
+| input da leggere per fotogramma (**variante a sprite**) | riga 20 `SYS AD`, routine in ML a 30720 caricata dai `DATA 1094-1111` | le 8 righe della matrice lette dalla routine in linguaggio macchina con `di` (step 04 §4.6, step 09 §9.14): nessuna attesa forzata, nessuna coda, nessun auto-repeat da tarare: **179 istruzioni, 1627 cicli = 441 us**, misurati sul core dell'emulatore | se il gioco gira troppo veloce si sale `DL` (§8.2d) |
 | fine livello | 65-66 | conteggio dei barili residui con rumore + rampa | leggere, non serve modificarla |
 
 ## 8.2b Perche' l'omino era lento: l'auto-repeat e' il suo limite
@@ -108,7 +108,7 @@ freccia quando riceve la nuova vita, ed e' **voluto**: e' quello che faceva il j
 
 La variante a sprite (`lo_scalatore_lm80c_sprites.bas`) legge la tastiera direttamente, come faceva
 l'originale con il joystick, ma **da una routine in linguaggio macchina** (`lm80c/ml/lm80c_keys.asm`,
-284 byte a `$7800`, caricata dai `DATA 1094-1111` e richiamata con `SYS AD+16`). Conseguenze sui
+279 byte a `$7800`, caricata dai `DATA 1094-1111` e richiamata con `SYS AD`). Conseguenze sui
 tempi:
 
 - **il centesimo di `INKEY` non c'e' piu'**: un fotogramma non ha piu' l'attesa incorporata dello
@@ -139,8 +139,8 @@ Il primo `RUN` della variante a sprite con la routine in ML non e' arrivato al g
 `OUT OF DATA ERROR IN LINE 110`. La routine **non c'entra**: e' il **puntatore dei `DATA`**.
 
 Il BASIC legge i `DATA` in **ordine di numero di riga** (non di listato) e la riga 3 chiama il
-caricamento **prima** che il gioco legga i suoi dati. Il caricatore (`RESTORE 1094` + 285 letture: il
-`284` e i 284 byte) arriva cosi' **in fondo all'elenco del programma**, e il primo `READ` del gioco
+caricamento **prima** che il gioco legga i suoi dati. Il caricatore (`RESTORE 1094` + 280 letture: il
+`279` e i 279 byte) arriva cosi' **in fondo all'elenco del programma**, e il primo `READ` del gioco
 (riga 110, `READ CD(N)` dentro il `GOSUB 100` della riga 10) non trova piu' niente. In altre parole il
 blocco di `DATA` della routine, pur essendo oltre i dati del gioco, **se li mangia tutti**.
 
@@ -188,7 +188,7 @@ immediato.
 | 4 | `prove/p04-tastiera.bas` | codici tasto: SU 30, GIU' 31, SINISTRA 28, DESTRA 29, SPAZIO 32 | step 04 |
 | 5 | `prove/p05-punteggio.bas` | punteggio allineato a destra, vite e livello aggiornati, `#` fuori dall'area numerica | step 06 |
 | 6 | `prove/p06-suoni.bas` | i 5 suoni del gioco | step 07 |
-| 7 | `prove/p08-matrice.bas` (solo variante a sprite) | la prima riga conferma `routine ML caricata: 284 byte` (se invece compare `OUT OF DATA ERROR`, il `RESTORE` in coda alla riga 3 del listato e' saltato: §8.2e); a riposo le otto righe sono tutte `........` con `K 0` e `FLAG 0`; premendo un cursore o il suo alias (`J L I K Z`) compaiono gli `0` nella riga e nella colonna giusta, `FLAG` cambia e `K` diventa 28/29/30/31; tenendo premuta una freccia e premendo SPAZIO il `K` diventa 32 **e** il flag della freccia resta acceso; `TEST 28:`... mostra il modo con parametro | step 04 §4.6, step 09 §9.14 |
+| 7 | `prove/p08-matrice.bas` (solo variante a sprite) | la prima riga conferma `routine ML caricata: 279 byte` (se invece compare `OUT OF DATA ERROR`, il `RESTORE` in coda alla riga 3 del listato e' saltato: §8.2e); a riposo le otto righe sono tutte `........` con `K 0` e `FLAG 0`; premendo un cursore o il suo alias (`J L I K Z`) compaiono gli `0` nella riga e nella colonna giusta, `FLAG` cambia e `K` diventa 28/29/30/31; tenendo premuta una freccia e premendo SPAZIO il `K` diventa 32 **e** il flag della freccia resta acceso; `TEST 28:`... mostra il modo con parametro | step 04 §4.6, step 09 §9.14 |
 | 8 | `lo_scalatore_lm80c.bas` con `RUN` (versione a tile) | partita giocabile: movimento, salto (+1000 su barile), borsa (+150), morte, vite, livelli | step 04, 05 |
 | 9 | `lo_scalatore_lm80c_sprites.bas` con `RUN` (variante a sprite) | come il punto 8, con omino e barile come sprite, e **salto mentre si cammina** (tieni SINISTRA e premi SPAZIO) | step 04 §4.6, step 09 §9.10 e §9.14 |
 | 10 | partita lunga | conteggio barili -> livello successivo, bonus vita a 10000, `GAME OVER` con punteggio finale | step 05, 06 |

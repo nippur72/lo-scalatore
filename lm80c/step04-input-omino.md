@@ -215,16 +215,16 @@ del registro 15, ma mai a zero). Il linguaggio macchina chiude il problema alla 
 |---|---|---|
 | 1 | `...:DI=DO(INT(RND(1)*2)):KEY 9,8,2` | `...:DI=DO(INT(RND(1)*2))` (l'auto-repeat non serve piu') |
 | 3 | `...:E3=1:Q=10000:GOTO 10` | `...:E3=1:Q=10000:GOSUB 146:GOTO 10` (carica la routine) |
-| 20 | `PAUSE DL:K=INKEY(0):IF NB>0 THEN NB=NB-1:K=0` | `PAUSE DL:SYS AD+16:K=PEEK(AD)` |
+| 20 | `PAUSE DL:K=INKEY(0):IF NB>0 THEN NB=NB-1:K=0` | `PAUSE DL:SYS AD:K=PEEK(SB)` |
 | 58 | `...:CH=CH-1:NB=2:IF CH<0 THEN GOSUB 125:END` | `...:CH=CH-1:IF CH<0 THEN GOSUB 125:END` (via l'inibizione `NB`: serviva solo per `TMPKEYBFR`) |
 | 130-143 | routine di lettura in BASIC (`OUT`/`INP`) | **tolte**: al loro posto la routine in ML |
 | 145-147 | — | caricamento della routine in ML dai `DATA 1094-1111` |
-| 1094-1111 | — | i **284 byte** della routine (il primo valore e' la lunghezza `LN`) |
+| 1094-1111 | — | i **279 byte** della routine (il primo valore e' la lunghezza `LN`) |
 
 ```
-145 REM input in ML: blocco a AD (K in PEEK(AD)), routine a SYS AD+16
+145 REM input in ML: ingresso a SYS AD, blocco di stato in coda (K in PEEK(SB))
 146 AD=30720:RESTORE 1094:READ LN:FOR N=0 TO LN-1:READ DT:POKE AD+N,DT:NEXT:RESTORE 101
-147 RETURN
+147 SB=AD+268:RETURN
 ```
 
 #### Il `RESTORE 101` in fondo alla riga 146 non e' un ornamento
@@ -232,8 +232,8 @@ del registro 15, ma mai a zero). Il linguaggio macchina chiude il problema alla 
 Il primo collaudo di questo listato si e' fermato con **`OUT OF DATA ERROR IN LINE 110`**. Non era la
 routine in ML: era il **puntatore dei `DATA`**. Il BASIC consuma i `DATA` **in ordine di numero di
 riga** (non di listato), e la riga 3 chiama il caricamento **prima** che il gioco legga i suoi dati. Il
-caricamento parte da `RESTORE 1094` e legge **tutti** i valori che trova da li' in poi (il `284`, poi i
-284 byte: 285 valori, cioe' fino all'ultima riga del programma), quindi il puntatore resta a **fondo
+caricamento parte da `RESTORE 1094` e legge **tutti** i valori che trova da li' in poi (il `279`, poi i
+279 byte: 280 valori, cioe' fino all'ultima riga del programma), quindi il puntatore resta a **fondo
 elenco**: il primo `READ` del gioco (riga 110, `READ CD(N)` dentro il `GOSUB 100` della riga 10) non
 trova piu' niente.
 
@@ -256,28 +256,33 @@ La routine e' in `lm80c/ml/lm80c_keys.asm` (Z80), si assembla con z88dk:
 
 ```bash
 cd lm80c/ml
-z80asm -b lm80c_keys.asm     # -> lm80c_keys.bin (284 byte)
+z80asm -b lm80c_keys.asm     # -> lm80c_keys.bin (279 byte)
 node build.js                 # assembla e stampa il blocco DATA per il listato
 node verifica.mjs             # controlla i listati (DATA uguali al binario, righe, salti, ingombro)
 node prova_ml.mjs /percorso/di/lm80c-emu   # esegue la routine sul core dell'emulatore
 ```
 
-`build.js` controlla anche che l'ingresso sia davvero a `+16` (cioe' che il blocco di stato in testa
-al binario sia lungo 16 byte) e stampa le righe `DATA` con 16 byte per riga: si incollano in fondo al
-listato. Il blocco sta **dopo** i dati del gioco (1094-1111, cioe' oltre il 1093 dove finisce la catena
-di `READ` delle righe 110-115), ma il caricamento lo consuma tutto: da qui il `RESTORE 101` in coda
-alla riga 146 (vedi sopra).
+`build.js` controlla anche che l'ingresso sia davvero al **primo byte** (cioe' che il codice non sia
+stato spostato) e calcola l'indirizzo del blocco di stato, che sta **in coda** al binario: lo stampa
+insieme alle righe `DATA` (16 byte per riga), che si incollano in fondo al listato; l'offset che ne
+esce e' quello di `SB`, da usare nei `PEEK`. Il blocco sta **dopo** i dati del gioco (1094-1111, cioe'
+oltre il 1093 dove finisce la catena di `READ` delle righe 110-115), ma il caricamento lo consuma
+tutto: da qui il `RESTORE 101` in coda alla riga 146 (vedi sopra).
 
 ### Dove sta e perche' proprio li'
 
+Il **codice** sta in testa e il **blocco di stato** in coda: l'ingresso e' il primo byte, il blocco
+dipende dalla lunghezza di codice+dati (268 byte con la routine attuale), quindi il suo indirizzo si
+sposta se il codice cresce. Non e' piu' un indirizzo fisso: `build.js` lo calcola e `verifica.mjs`
+controlla che l'`SB` del listato sia d'accordo.
+
 | indirizzo | cosa c'e' |
 |---|---|
-| **30720** (`$7800`, `AD`) | blocco di stato: e' **il primo byte del binario**, quindi non cambia mai anche se la routine cresce |
-| 30721 | `FLAGS`: bit0 DESTRA, bit1 SU, bit2 SINISTRA, bit3 GIU', bit4 SPAZIO |
-| 30722+R (R=0..7) | immagine grezza delle 8 righe: `PEEK(AD+2+R)` |
-| 30730 | stato dello SPAZIO al fotogramma precedente (serve per il fronte) |
-| 30731..30735 | riserva |
-| **30736** (`AD+16`) | **ingresso** della routine: e' qui che salta `SYS` |
+| **30720** (`$7800`, `AD`) | **ingresso** della routine: e' il **primo byte del binario**, quindi e' qui che salta `SYS` |
+| **30988** (`AD+268`, `SB`) | blocco di stato: `K`, il codice del gioco (o 1/0 in modo test) |
+| 30989 | `FLAGS`: bit0 DESTRA, bit1 SU, bit2 SINISTRA, bit3 GIU', bit4 SPAZIO |
+| 30990+R (R=0..7) | immagine grezza delle 8 righe: `PEEK(SB+2+R)` |
+| 30998 | stato dello SPAZIO al fotogramma precedente (serve per il fronte) |
 
 Perche' `$7800`:
 
@@ -333,24 +338,24 @@ BASIC e' stata **tolta** dal gioco.
 Il gioco fa **una chiamata per fotogramma**:
 
 ```
-20 PAUSE DL:SYS AD+16:K=PEEK(AD)      ' una scansione, K e' il codice del gioco
+20 PAUSE DL:SYS AD:K=PEEK(SB)         ' una scansione, K e' il codice del gioco
 ```
 
 La routine legge **tutte e otto** le righe della matrice (non solo le tre che servono) e ne ricava:
 
-- **`PEEK(AD)`** = il codice `K` del gioco: 0 (nessun comando), 28 SINISTRA, 29 DESTRA, 30 SU,
+- **`PEEK(SB)`** = il codice `K` del gioco: 0 (nessun comando), 28 SINISTRA, 29 DESTRA, 30 SU,
   31 GIU', 32 SPAZIO (solo sul fronte). E' lo stesso codice che la riga 20 leggeva da `INKEY`:
   **le righe 21-34 del gioco non sono state toccate**, cambia solo chi fornisce il valore;
-- **`PEEK(AD+1)`** = `FLAGS`, lo stato istantaneo dei 5 comandi (bit0 DESTRA, bit1 SU, bit2 SINISTRA,
+- **`PEEK(SB+1)`** = `FLAGS`, lo stato istantaneo dei 5 comandi (bit0 DESTRA, bit1 SU, bit2 SINISTRA,
   bit3 GIU', bit4 SPAZIO). Serve per la prova `p08` e, se un giorno servisse, per un comando che
   debba funzionare "tenuto premuto" senza passare da `K`;
-- **`PEEK(AD+2+R)`** (R = 0..7) = la riga grezza come esce dal PSG: i bit a **0** sono i tasti
+- **`PEEK(SB+2+R)`** (R = 0..7) = la riga grezza come esce dal PSG: i bit a **0** sono i tasti
   premuti di quella riga (convenzione della matrice). E' il motivo per cui la lettura va fatta sui
   bit e non sui codici del firmware: le lettere dell'alias si vedono direttamente;
-- **`PEEK(AD+10)`** = lo stato dello SPAZIO al fotogramma precedente, per il fronte.
+- **`PEEK(SB+10)`** = lo stato dello SPAZIO al fotogramma precedente, per il fronte.
 
 La routine funziona anche in **modo test**, con il codice di un comando come parametro:
-`SYS AD+16,28` lascia **1** in `PEEK(AD)` se il comando e' premuto (cursore **o** alias), altrimenti
+`SYS AD,28` lascia **1** in `PEEK(SB)` se il comando e' premuto (cursore **o** alias), altrimenti
 **0**; con un codice fuori dall'intervallo 28..32 lascia 0. In questo modo l'omino o un eventuale
 menu possono chiedere "e' premuto il comando X?" senza rifare i confronti in BASIC.
 
@@ -383,7 +388,7 @@ cursori SU/GIU', `J I K` nella stessa riga (`$EF`), `Z` nella stessa riga di `A 
   DESTRA**. In pratica: con GIU' e SINISTRA premuti insieme l'omino **scende** (come sull'originale),
   con SU e SINISTRA insieme **va a sinistra**;
 - **lo SPAZIO ha il riconoscimento del fronte**: `K=32` scatta solo al passaggio 0 -> 1 dello spazio
-  (il byte a `AD+10` tiene lo stato precedente). Serve perche' la matrice da' uno **stato** e non un
+  (il byte a `SB+10` tiene lo stato precedente). Serve perche' la matrice da' uno **stato** e non un
   **evento**: senza fronte, tenendo premuto SPAZIO si salterebbe a ogni fotogramma (e il salto avanza
   di due colonne, quindi l'omino "volerebbe" in avanti). Con il fronte: tenendo premuti SPAZIO e una
   freccia si salta **una volta** e poi si cammina, e tenendo premuto SPAZIO non si salta di nuovo
@@ -423,7 +428,7 @@ e' interrompibile; va solo tenuto premuto un attimo in piu'.
   `node ml/prova_ml.mjs /percorso/di/lm80c-emu` (lo script e' nel repo). Le prove (33 controlli, tutte
   superate - il numero lo stampa lo script) coprono: matrice a riposo (`$FF` su tutte e otto
   le righe, `K=0`), i quattro cursori, i cinque alias, il fronte dello spazio (e la sua memoria in
-  `AD+10`), le priorita' con due tasti premuti, il salto mentre si cammina, il modo test e la
+  `SB+10`), le priorita' con due tasti premuti, il salto mentre si cammina, il modo test e la
   **conservazione dei registri e dello stack** al ritorno (indispensabile: la routine viene chiamata
   mentre il BASIC sta eseguendo una riga). Lo stesso script conta istruzioni e cicli: **179
   istruzioni, 1627 cicli, 441 µs**;
@@ -447,4 +452,4 @@ della mappa. Per la variante a sprite: se `prove/p08` non mostra il tasto giusto
 colonna giusta, riporta **riga e colonna** dello `0` che compare e il tasto premuto (la tabella di
 §4.6 dice quali valori aspettarsi); se il gioco parte ma l'omino non risponde, il primo sospetto e'
 che i `DATA 1094-1111` non siano stati incollati per intero (il controllo che fa la riga 4 di `p08`:
-`routine ML caricata: 284 byte`), oppure che si stia usando il firmware 32K.
+`routine ML caricata: 279 byte`), oppure che si stia usando il firmware 32K.

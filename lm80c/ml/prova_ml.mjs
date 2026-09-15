@@ -25,8 +25,11 @@ const { default: emscripten } = await import(
 const wasmBinary = fs.readFileSync(path.join(EMU, 'emscripten_module.wasm'));
 const m = await emscripten({ wasmBinary });
 
-const AD = 0x7800, ENTRY = AD + 16, SENTINEL = 0x7F00;
+const AD = 0x7800, SENTINEL = 0x7F00;
 const bin = fs.readFileSync(path.join(HERE, 'lm80c_keys.bin'));
+const STATUS_LEN = 11;                          // blocco di stato in coda al binario
+const ST = AD + bin.length - STATUS_LEN;        // ST+0 K, +1 FLAGS, +2..+9 righe, +10 SPAZIO
+const ENTRY = AD;                               // l'ingresso e' il primo byte del binario
 
 m._cpu_init();                 // collega il tick del Z80
 m._cpu_reset();
@@ -41,7 +44,7 @@ m._mem_write(SENTINEL, 0xC3); m._mem_write(SENTINEL + 1, 0x00); m._mem_write(SEN
 const press = (row, col) => m._keyboard_press(row, col);
 const reset = () => m._keyboard_reset();
 
-// simula SYS AD+16[,param]: mette un indirizzo di ritorno finto sullo stack, riempie i registri con
+// simula SYS AD[,param]: mette un indirizzo di ritorno finto sullo stack, riempie i registri con
 // valori noti e verifica che la routine li restituisca tutti come li ha trovati (il BASIC ci conta).
 function call(param) {
    const SP = 0x7F20;
@@ -54,9 +57,9 @@ function call(param) {
    while (m._get_z80_pc() !== SENTINEL && istruzioni++ < 20000) cicli += m._lm80c_tick();
    if (istruzioni >= 20000) throw new Error('la routine non e\' tornata all\'indirizzo di ritorno');
    return {
-      k: m._mem_read(AD), flags: m._mem_read(AD + 1),
-      rows: Array.from({ length: 8 }, (_, r) => m._mem_read(AD + 2 + r)),
-      spz: m._mem_read(AD + 10),
+      k: m._mem_read(ST), flags: m._mem_read(ST + 1),
+      rows: Array.from({ length: 8 }, (_, r) => m._mem_read(ST + 2 + r)),
+      spz: m._mem_read(ST + 10),
       ritorno_ok: m._get_z80_pc() === SENTINEL && m._get_z80_sp() === SP + 2,
       registri_ok: m._get_z80_bc() === 0x1234 && m._get_z80_de() === 0x5678 &&
                    m._get_z80_hl() === 0x9ABC && m._get_z80_ix() === 0x1111 &&
@@ -121,7 +124,7 @@ check('modo test 32 a riposo', call(32).k, 0);
 
 console.log(`\nbinario: ${bin.length} byte a $${AD.toString(16).toUpperCase()}, ingresso a $${ENTRY.toString(16).toUpperCase()}`);
 // 1 ciclo = 1 periodo di clock: il Z80 del LM80C gira a 3,6864 MHz
-console.log(`una chiamata completa (SYS AD+16 senza parametro): ${maxistr} istruzioni, ` +
+console.log(`una chiamata completa (SYS AD senza parametro): ${maxistr} istruzioni, ` +
             `${cicliscan} cicli = ${(cicliscan / 3.6864).toFixed(0)} us`);
 console.log(ko ? `${n} controlli, ${ko} FALLITI` : `${n} controlli, tutti superati`);
 process.exit(ko ? 1 : 0);

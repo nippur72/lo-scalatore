@@ -20,24 +20,29 @@
 ;
 ;  USO DA BASIC (AD = 30720 = $7800, base del blocco caricata con POKE dai DATA)
 ;      SYS AD              -> scansione completa; il codice K del gioco e' in
-;                             PEEK(AD)  (0 = niente, 28/29/30/31/32)
-;      SYS AD,codice       -> PEEK(AD) = 1 se il comando e' premuto, 0 se no
+;                             PEEK(ST)  (0 = niente, 28/29/30/31/32)
+;      SYS AD,codice       -> PEEK(ST) = 1 se il comando e' premuto, 0 se no
 ;                             (codice = 28 sinistra, 29 destra, 30 su, 31 giu',
 ;                              32 spazio; con gli alias compresi)
 ;
-;  BLOCCO DI STATO (in testa al binario, quindi a partire da 30720):
-;      AD+0   K       codice del gioco (28/29/30/31/32) o 1/0 in modo test
-;      AD+1   FLAGS   bit0 DESTRA bit1 SU bit2 SINISTRA bit3 GIU' bit4 SPAZIO
-;      AD+2   riga 0  ($FE) bit4 = SPAZIO   bit3 = RUN/STOP   bit0 = '1'
-;      AD+3   riga 1  ($FD) bit4 = Z
-;      AD+4   riga 2  ($FB)
-;      AD+5   riga 3  ($F7)
-;      AD+6   riga 4  ($EF) bit1 = I   bit2 = J   bit5 = K
-;      AD+7   riga 5  ($DF) bit0 = GIU' bit2 = L  bit7 = SU
-;      AD+8   riga 6  ($BF) bit0 = SINISTRA       bit7 = DESTRA
-;      AD+9   riga 7  ($7F)
-;      AD+10  SPAZIO  stato del fotogramma precedente (serve per il fronte)
-;      AD+16  INGRESSO della routine (SYS AD+16, oppure SYS AD+16,codice)
+;  INGRESSO della routine: e' la PRIMA istruzione del binario, cioe' AD
+;  (SYS AD oppure SYS AD,codice) - il codice sta in testa, non c'e' piu' il
+;  salto di 16 byte di prima.
+;
+;  BLOCCO DI STATO: e' IN CODA al binario (ST = AD + 268 con il codice attuale;
+;  se il codice cresce ST si sposta, e build.js stampa sempre l'indirizzo esatto
+;  da usare nel PEEK del listato):
+;      ST+0   K       codice del gioco (28/29/30/31/32) o 1/0 in modo test
+;      ST+1   FLAGS   bit0 DESTRA bit1 SU bit2 SINISTRA bit3 GIU' bit4 SPAZIO
+;      ST+2   riga 0  ($FE) bit4 = SPAZIO   bit3 = RUN/STOP   bit0 = '1'
+;      ST+3   riga 1  ($FD) bit4 = Z
+;      ST+4   riga 2  ($FB)
+;      ST+5   riga 3  ($F7)
+;      ST+6   riga 4  ($EF) bit1 = I   bit2 = J   bit5 = K
+;      ST+7   riga 5  ($DF) bit0 = GIU' bit2 = L  bit7 = SU
+;      ST+8   riga 6  ($BF) bit0 = SINISTRA       bit7 = DESTRA
+;      ST+9   riga 7  ($7F)
+;      ST+10  SPAZIO  stato del fotogramma precedente (serve per il fronte)
 ;  In tutte le righe il bit vale 1 quando il tasto NON e' premuto (convenzione
 ;  della matrice); FLAGS e K invece hanno il bit a 1 quando il tasto E' premuto.
 ;
@@ -62,23 +67,11 @@ PSGDAT      equ   65            ; $41: scrittura del dato nel registro latched
 REG15       equ   15            ; port B = righe della matrice (uscita)
 REG14       equ   14            ; port A = colonne della matrice (ingresso)
 NROWS       equ   8
-ENTRY       equ   $7810         ; indirizzo dell'ingresso (SYS): +16 dalla base
+ENTRY       equ   $7800         ; indirizzo dell'ingresso (SYS): prima della base
 
 ; ============================================================================
-;  BLOCCO DI STATO - deve restare all'inizio: e' la parte che BASIC legge con
-;  PEEK, quindi il suo indirizzo non cambia mai ($7800 = 30720).
-; ============================================================================
-RESULT:     defb  0             ; +0  K (o 1/0 in modo test)      <- PEEK(AD)
-FLAGS:      defb  0             ; +1  stato dei 5 comandi         <- PEEK(AD+1)
-IMG:        defs  8,0           ; +2..+9 righe 0..7 come lette dal PSG
-SPZP:       defb  0             ; +10 SPAZIO al fotogramma precedente
-            defs  5,0           ; +11..+15 riserva (l'ingresso sta a +16)
-
-; ============================================================================
-;  ENTRY POINT (qui salta SYS: AD+16 = 30736)
+;  ENTRY POINT (qui salta SYS: AD = 30720)
 ;  A = parametro: 0 = scansione e calcolo di K, altro = prova di un comando
-;  (niente "org" qui: z80asm vuole un solo org, il riempimento qui sopra mette
-;   il codice esattamente a ENTRY; build.js lo verifica)
 ; ============================================================================
 KEYIN:      push  af
             push  bc
@@ -254,3 +247,13 @@ KTSV:       ld    (RESULT),a
 ROWMASKS:   defb  $FE,$FD,$FB,$F7,$EF,$DF,$BF,$7F   ; righe 0..7 (bit a 0)
 BITTAB:     defb  4,1,2,8,16    ; codici 28,29,30,31,32 -> bit di FLAGS
 PRM:        defb  0             ; parametro di SYS (0 = scansione)
+
+; ============================================================================
+;  BLOCCO DI STATO - in CODA: e' la parte che BASIC legge con PEEK, quindi il
+;  suo indirizzo (ST) e' AD + la lunghezza di codice e dati, e cambia se il
+;  codice cresce: build.js stampa il valore da usare nel listato.
+; ============================================================================
+RESULT:     defb  0             ; ST+0  K (o 1/0 in modo test)      <- PEEK(ST)
+FLAGS:      defb  0             ; ST+1  stato dei 5 comandi         <- PEEK(ST+1)
+IMG:        defs  8,0           ; ST+2..+9 righe 0..7 come lette dal PSG
+SPZP:       defb  0             ; ST+10 SPAZIO al fotogramma precedente

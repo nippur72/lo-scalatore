@@ -10,8 +10,11 @@
 //   - che ogni target di GOSUB/GOTO/THEN/RESTORE esista;
 //   - che i DATA della routine siano esattamente lm80c_keys.bin, contatore di lunghezza compreso
 //     (se si modifica il .asm e non si aggiornano i DATA, questo e' il controllo che lo dice);
-//   - che il listato del gioco chiami la routine con SYS AD+16 e non abbia residui del vecchio
+//   - che il listato del gioco chiami la routine con SYS AD (l'ingresso e' il primo byte del
+//     binario) e non abbia residui del vecchio
 //     input da BASIC (INKEY/INP/K1/K2/K3/KS/SZ/NB/KEY);
+//   - che l'offset del blocco di stato usato dal listato (SB=AD+n) coincida con quello calcolato
+//     dal binario (il blocco sta IN CODA: bin.length - STATUS_LEN);
 //   - il percorso del puntatore dei DATA, simulato come lo vede il BASIC (in ordine di numero di
 //     riga): il caricamento della routine ML arriva in fondo all'elenco, quindi deve chiudere con
 //     RESTORE, altrimenti i READ del gioco finiscono con OUT OF DATA ERROR;
@@ -27,6 +30,7 @@ import { fileURLToPath } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..', '..');       // radice del repository
 const BASE = 0x7800, PROGST = 0x560E;           // routine in ML e inizio area BASIC (64K)
+const STATUS_LEN = 11;                          // blocco di stato IN CODA al binario (K+FLAGS+8 righe+SPAZIO)
 const LISTATI = ['lm80c/lo_scalatore_lm80c_sprites.bas', 'lm80c/prove/p08-matrice.bas'];
 
 const bin = fs.readFileSync(path.join(HERE, 'lm80c_keys.bin'));
@@ -168,8 +172,8 @@ for (const rel of LISTATI) {
 
    if (rel.includes('sprites')) {
       for (const [n, t] of righe) {
-         if (!t.startsWith('REM') && /\bSYS\b/.test(t) && !/SYS AD\+16/.test(t)) {
-            ko(`riga ${n}: SYS senza AD+16: ${t}`);
+         if (!t.startsWith('REM') && /\bSYS\b/.test(t) && !/\bSYS AD(?![+\w])/.test(t)) {
+            ko(`riga ${n}: SYS che non chiama l'ingresso AD: ${t}`);
          }
       }
       const residui = ['INKEY', 'INP(', 'K1', 'K2', 'K3', 'KS', 'SZ', 'NB', 'KEY 9'];
@@ -181,6 +185,16 @@ for (const rel of LISTATI) {
          }
       }
       console.log('ok  nessun residuo di INKEY/INP/K1/K2/K3/KS/SZ/NB/KEY');
+   }
+
+   // Il blocco di stato sta in coda al binario: l'offset usato dal listato deve essere quello.
+   const atteso = bin.length - STATUS_LEN;
+   const mStato = /\bSB=AD\+(\d+)/.exec(testo);
+   if (!mStato) ko(`manca SB=AD+${atteso} (offset del blocco di stato in coda al binario)`);
+   else if (Number(mStato[1]) !== atteso) {
+      ko(`SB=AD+${mStato[1]}: atteso AD+${atteso} (binario ${bin.length} byte - stato ${STATUS_LEN})`);
+   } else {
+      console.log(`ok  SB=AD+${atteso} = blocco di stato in coda (${bin.length} byte totali)`);
    }
 
    const ingombro = [...righe.values()].reduce((s, t) => s + t.length + 5, 0);  // stima per eccesso

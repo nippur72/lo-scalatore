@@ -197,7 +197,7 @@ numerazione e' stata riorganizzata come segue:
 | 3 | `SC=1:CH=2:E1=0:E2=0:Z=16:J=8:E3=1:Q=10000:GOTO 10` | `...:GOSUB 146:GOTO 10` (carica la routine in linguaggio macchina dai `DATA`) |
 | 17 | `T=VPEEK(S):VPOKE S,40` | `T=VPEEK(S):GOSUB 118` |
 | 19 | `GOSUB 4:V=BA(Y):W=0:DO=DO(INT(RND(1)*2))` | `GOSUB 4:V=BA(Y):VPOKE V,0:W=0:DO=DO(INT(RND(1)*2)):GOSUB 117` (§9.13: non basta la `120`) |
-| 20 | `PAUSE DL:K=INKEY(0):IF K=0 THEN 41` | `PAUSE DL:SYS AD+16:K=PEEK(AD)` (la routine in linguaggio macchina legge la matrice, §9.14) |
+| 20 | `PAUSE DL:K=INKEY(0):IF K=0 THEN 41` | `PAUSE DL:SYS AD:K=PEEK(SB)` (la routine in linguaggio macchina legge la matrice, §9.14) |
 | 26 | `IF VPEEK(S+32)=Z THEN VPOKE S,T:S=S+32:GOTO 40` | `IF VPEEK(S+32)=Z THEN S=S+32:GOTO 40` |
 | 28 | `DI=-1:IF VPEEK(S+31)>1 THEN VPOKE S,T:S=S-1:GOTO 40` | `DI=-1:IF VPEEK(S+31)>1 THEN S=S-1:GOTO 40` |
 | 29 | `IF T<>Z THEN VPOKE S,T:S=S+DI:T=VPEEK(S):GOTO 55` | `IF T<>Z THEN S=S+DI:T=VPEEK(S):GOTO 55` |
@@ -223,7 +223,7 @@ numerazione e' stata riorganizzata come segue:
 | 70 | `CLS` | `CLS:VPOKE 6912,208:VPOKE 6916,208` |
 | 125 | `CLS:LOCATE 8,10:PRINT "GAME OVER"` | `VPOKE 6912,208:VPOKE 6916,208:CLS:LOCATE 8,10:PRINT "GAME OVER"` (§9.13: il `CLS` cancella la name table, **non** gli sprite) |
 | — | — | **`145`-`147`** (nuove): caricamento della routine in linguaggio macchina a `AD=30720` dai `DATA 1094-1111` (§9.14) |
-| — | — | **`1094`-`1111`** (nuove): i 284 byte della routine di input, 16 per riga |
+| — | — | **`1094`-`1111`** (nuove): i 279 byte della routine di input, 16 per riga |
 
 Tutte le altre righe sono identiche alla versione congelata (in particolare quelle della pila:
 `4-7`, `74`, e il `VPOKE BA(N),24` che la ridisegna).
@@ -291,7 +291,7 @@ Il significato di `W` (riga 45) e' l'unico cambio di semantica: nella versione a
 | limite di 4 sprite per riga | non esiste (i tile non hanno limiti) | **rilevante**: con 2 soli sprite (omino e barile) non si tocca mai, ed e' il motivo per cui la pila resta a tile |
 | `VPOKE` per fotogramma | 1-3 per l'omino + 1-2 per il barile | 3 per l'omino (`119`), 3 per il barile (`121`): stesso ordine di grandezza |
 | riga 0 (barra di stato) | l'omino puo' scriverci un tile (glitch) | lo sprite ci finisce sopra, nessun glitch nella mappa |
-| **input da tastiera** | `INKEY(0)`: un tasto per volta, con coda, auto-repeat e 1 cs di attesa (step 04 §4.5) | **routine in linguaggio macchina** a `30720` (`lm80c/ml/lm80c_keys.asm`, 441 µs per fotogramma), richiamata con `SYS AD+16`: matrice letta con `di`/`ei`, stato invece di evento, frecce e SPAZIO insieme, niente `KEY` ne' `NB`, tasti alternativi `J L I K Z` (§9.14) |
+| **input da tastiera** | `INKEY(0)`: un tasto per volta, con coda, auto-repeat e 1 cs di attesa (step 04 §4.5) | **routine in linguaggio macchina** a `30720` (`lm80c/ml/lm80c_keys.asm`, 441 µs per fotogramma), richiamata con `SYS AD`: matrice letta con `di`/`ei`, stato invece di evento, frecce e SPAZIO insieme, niente `KEY` ne' `NB`, tasti alternativi `J L I K Z` (§9.14) |
 
 ## 9.10 Procedura di prova sull'emulatore
 
@@ -327,12 +327,12 @@ problema residuo nel gioco e' nella logica, non nel VDP.
 ### a2) `prove/p08-matrice.bas` (input)
 
 E' la prova dell'input in linguaggio macchina: carica la routine dai suoi `DATA` (la prima riga dello
-schermo deve dire `routine ML caricata: 284 byte`) e poi mostra, aggiornandosi da sola:
+schermo deve dire `routine ML caricata: 279 byte`) e poi mostra, aggiornandosi da sola:
 
 - le **otto righe** della matrice come le legge la routine, con un `0` per ogni tasto premuto
   (`.` = non premuto, convenzione della matrice);
 - `FLAGS`, `K` e lo stato dello SPAZIO del fotogramma precedente;
-- il risultato del **modo test** (`SYS AD+16,codice` dei cinque comandi) e la legenda di
+- il risultato del **modo test** (`SYS AD,codice` dei cinque comandi) e la legenda di
   riga/colonna dei tasti interessati.
 
 Risultato atteso:
@@ -520,11 +520,11 @@ scritta in `lm80c/ml/lm80c_keys.asm`, assemblata con z88dk (`z80asm -b`) e caric
 
 ```
 3 ...:Q=10000:GOSUB 146:GOTO 10
-20 PAUSE DL:SYS AD+16:K=PEEK(AD)
-145 REM input in ML: blocco a AD (K in PEEK(AD)), routine a SYS AD+16
+20 PAUSE DL:SYS AD:K=PEEK(SB)
+145 REM input in ML: ingresso a SYS AD, blocco di stato in coda (K in PEEK(SB))
 146 AD=30720:RESTORE 1094:READ LN:FOR N=0 TO LN-1:READ DT:POKE AD+N,DT:NEXT:RESTORE 101
-147 RETURN
-1094-1111 DATA della routine (284 byte, il primo valore e' la lunghezza)
+147 SB=AD+268:RETURN
+1094-1111 DATA della routine (279 byte, il primo valore e' la lunghezza)
 ```
 
 La catena completa della tastiera sul firmware (sniffer, `KBMAP`, `TMPKEYBFR`, limiti di `INKEY`) e' in
@@ -562,7 +562,7 @@ Le due scelte da conoscere (si cambiano nel sorgente assembly, `KFLAGS`/`KCALC`,
   sopra, destra*): con GIU' e SINISTRA premuti insieme l'omino **scende** (come sul VIC), con SU e
   SINISTRA insieme **va a sinistra**. Per far vincere le laterali sulle verticali basta scambiare
   l'ordine dei `bit` in `KCALC`;
-- **fronte dello SPAZIO** (`AD+10` tiene lo stato precedente): `K=32` scatta solo al passaggio 0 -> 1.
+- **fronte dello SPAZIO** (`SB+10` tiene lo stato precedente): `K=32` scatta solo al passaggio 0 -> 1.
   Serve perche' lo **stato** non ha un "momento"; senza fronte, tenendo premuto SPAZIO l'omino
   salterebbe a ogni fotogramma e il salto avanza di **due colonne**, quindi volerebbe. Con il fronte:
   tenendo SPAZIO e una freccia si salta una volta e poi si cammina (e SPAZIO, tornando a 0, si riarma
