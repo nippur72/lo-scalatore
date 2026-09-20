@@ -104,6 +104,7 @@
 120 CLS:LOCATE 8,10:PRINT "GAME OVER"
 121 LOCATE 5,12:PRINT "PUNTEGGIO ";SS
 122 RETURN
-1000 REM LO SCALATORE - port per LM80C Color Computer (LM80C BASIC 3.26)
-1001 REM orig. C.Lesher, Compute's Gazette 1/84 - SuperVIC 6/84 - digit. saver71
-1002 REM tile: 0 spazio 1 deviatore 8 trave 16 scala 24 barile 40 omino 41 borsa
+1000 REM Lo scalatore (the hardhat climber) 
+1001 REM port per LM80C di Antonino Porcino
+1002 REM orig. C.Lesher, Compute's Gazette 1/84 
+1003 REM SuperVIC 6/84 - digitato da saver71
