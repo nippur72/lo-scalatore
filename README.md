@@ -21,5 +21,9 @@ Additional folders in this repository include:
 - `mospeed/`: Mospeed compiler files
 - `original/`: original files
 - `xc/`: (W.I.P.) an attempt to create an XC= Basic version of the game
-- `lm80c/`: port of the game to the [LM80C](https://github.com/leomil72/LM80C) Z80 computer (TMS9918 video, AY-3-8910 sound), with the step-by-step porting notes (`step00`..`step09-*.md`), the test programs to be run on the emulator (`prove/`) and — for the sprite variant — the keyboard reading routine written in Z80 assembly (`ml/lm80c_keys.asm`), assembled with [z88dk](https://z88dk.org/) and embedded in the BASIC listing as `DATA` statements, with the Node scripts that assemble it, check the listings and run it on the emulator core (`ml/build.js`, `ml/verifica.mjs`, `ml/prova_ml.mjs`)
+- `lm80c/`: port of the game to the [LM80C](https://github.com/leomil72/LM80C) Z80 computer (TMS9918 video, AY-3-8910 sound)
+- `zcc/`: (W.I.P.) an attempt to create a C port for the Z88DK compiler
+- `xlib/`: (W.I.P.) an attempt to create e C port for the [CROSS-LIB](https://github.com/Fabrizio-Caruso/CROSS-LIB)
+
+
 
